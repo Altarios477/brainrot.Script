@@ -1,0 +1,67 @@
+-- ✅ Brainrot GUI: Noclip + TP Up + TP to Base
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+local noclipEnabled = false
+
+-- 🖼 GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "BrainrotTools"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0, 20, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+
+local function addButton(text, y, callback)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(1, 0, 0, 40)
+	btn.Position = UDim2.new(0, 0, 0, y)
+	btn.Text = text
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 18
+	btn.MouseButton1Click:Connect(callback)
+	return btn
+end
+
+-- ✅ Телепорт на высоту
+addButton("⬆️ TP НА ВЕРХ", 0, function()
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local upPos = hrp.Position + Vector3.new(0, 150, 0)
+		local tween = TweenService:Create(hrp, TweenInfo.new(1.5), {CFrame = CFrame.new(upPos)})
+		tween:Play()
+	end
+end)
+
+-- ✅ Телепорт на базу (координаты можно поменять)
+addButton("🏠 TP НА БАЗУ", 45, function()
+	local basePos = Vector3.new(0, 20, 0) -- поменяй на свою базу если надо
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local tween = TweenService:Create(hrp, TweenInfo.new(1.5), {CFrame = CFrame.new(basePos)})
+		tween:Play()
+	end
+end)
+
+-- ✅ Noclip включение/выключение
+local noclipBtn = addButton("🚪 Noclip: OFF", 90, function()
+	noclipEnabled = not noclipEnabled
+	noclipBtn.Text = "🚪 Noclip: " .. (noclipEnabled and "ON" or "OFF")
+end)
+
+-- ✅ Сам Noclip (без CanCollide = true)
+RunService.Stepped:Connect(function()
+	if noclipEnabled and lp.Character then
+		for _, part in pairs(lp.Character:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
