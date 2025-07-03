@@ -1,0 +1,134 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Altarios477/brainrot.Script/refs/heads/main/Final%20Version"))()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+pcall(function() game:GetService("CoreGui"):FindFirstChild("Altarios_GUI"):Destroy() end)
+
+local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+gui.Name = "Altarios_GUI"
+
+-- Меню-плашка 💻
+local menuButton = Instance.new("TextButton", gui)
+menuButton.Size = UDim2.new(0, 80, 0, 30)
+menuButton.Position = UDim2.new(0, 10, 0, 10)
+menuButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+menuButton.Text = "💻 Меню"
+menuButton.TextColor3 = Color3.new(1, 1, 1)
+menuButton.Font = Enum.Font.GothamBold
+menuButton.TextSize = 14
+Instance.new("UICorner", menuButton)
+
+-- Главное окно
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 250, 0, 230)
+frame.Position = UDim2.new(0, 20, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.BorderSizePixel = 0
+frame.Visible = true
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame)
+local UIStroke = Instance.new("UIStroke", frame)
+UIStroke.Color = Color3.fromRGB(255, 85, 0)
+UIStroke.Thickness = 2
+
+local UIList = Instance.new("UIListLayout", frame)
+UIList.Padding = UDim.new(0, 6)
+UIList.FillDirection = Enum.FillDirection.Vertical
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- Переключение окна
+menuButton.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
+
+local function createButton(text, color, callback)
+    local b = Instance.new("TextButton", frame)
+    b.Size = UDim2.new(0, 220, 0, 35)
+    b.BackgroundColor3 = color
+    b.Text = text
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 16
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(callback)
+end
+
+-- 🎈 Телепорт вверх
+createButton("🎈 Телепорт Вверх", Color3.fromRGB(0, 170, 255), function()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local maxY = 0
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Part") and v.Transparency == 1 and v.CanCollide and v.Position.Y > 100 and v.Size.Y < 20 then
+            if v.Position.Y > maxY then
+                maxY = v.Position.Y
+            end
+        end
+    end
+
+    if maxY > 0 then
+        hrp.CFrame = CFrame.new(hrp.Position.X, maxY + 25, hrp.Position.Z)
+    else
+        hrp.CFrame = hrp.CFrame + Vector3.new(0, 25, 0)
+    end
+end)
+
+-- 🧠 Авто-кража Brainrot
+local autoSteal = false
+createButton("🧠 Авто-Кража Brainrot (ВКЛ/ВЫКЛ)", Color3.fromRGB(255, 85, 127), function()
+    autoSteal = not autoSteal
+end)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if autoSteal then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") and v.ObjectText == "Steal Brainrot" then
+                    v.HoldDuration = 0
+                    fireproximityprompt(v)
+                end
+            end
+        end
+    end
+end)
+
+-- 🔄 Телепорт к Brainrot (дорога)
+createButton("🔄 Телепорт к Дороге (Brainrot)", Color3.fromRGB(120, 200, 90), function()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local closest, dist = nil, math.huge
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Name == "Brainrot" then
+            local d = (v.HumanoidRootPart.Position - hrp.Position).Magnitude
+            if d < dist then
+                closest = v
+                dist = d
+            end
+        end
+    end
+
+    if closest then
+        hrp.CFrame = closest.HumanoidRootPart.CFrame + Vector3.new(3, 0, 0)
+    end
+end)
+
+-- 🏠 Телепорт к базе
+createButton("🏠 Телепорт к Базе", Color3.fromRGB(180, 120, 255), function()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local spawn = workspace:FindFirstChildOfClass("SpawnLocation")
+    if spawn then
+        hrp.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
+    else
+        hrp.CFrame = CFrame.new(0, 5, 0)
+    end
+end)
