@@ -1,0 +1,11 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Altarios477/brainrot.Script/refs/heads/main/%D0%B0%D1%8C%D0%B0%D1%8C%D0%B0%D0%BB%D1%81%D1%8C"))()
+
+game:GetService("UserInputService").InputBegan:Connect(function(i, g)
+    if g then return end
+    if i.KeyCode == Enum.KeyCode.V then
+        local c = game.Players.LocalPlayer.Character
+        if c and c:FindFirstChild("HumanoidRootPart") then
+            c.HumanoidRootPart.CFrame = c.HumanoidRootPart.CFrame + Vector3.new(0, 200, 0)
+        end
+    end
+end)
