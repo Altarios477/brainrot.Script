@@ -1,0 +1,104 @@
+local uis = game:GetService("UserInputService")
+local p = game.Players.LocalPlayer
+local c = p.Character or p.CharacterAdded:Wait()
+local hrp = c:WaitForChild("HumanoidRootPart")
+local h = c:WaitForChild("Humanoid")
+
+local g = Instance.new("ScreenGui", p:WaitForChild("PlayerGui"))
+g.ResetOnSpawn = false
+
+local f = Instance.new("Frame", g)
+f.Size = UDim2.new(0, 200, 0, 160)
+f.Position = UDim2.new(0.3, 0, 0.3, 0)
+f.BackgroundColor3 = Color3.fromRGB(30,30,30)
+f.Active = true
+f.Draggable = true
+
+local up = Instance.new("TextButton", f)
+up.Size = UDim2.new(1, -20, 0, 40)
+up.Position = UDim2.new(0,10,0,10)
+up.Text = "Вверх"
+up.BackgroundColor3 = Color3.fromRGB(60,60,60)
+up.TextColor3 = Color3.new(1,1,1)
+up.Font = Enum.Font.SourceSansBold
+up.TextSize = 18
+
+local down = Instance.new("TextButton", f)
+down.Size = UDim2.new(1, -20, 0, 40)
+down.Position = UDim2.new(0,10,0,60)
+down.Text = "Вниз"
+down.BackgroundColor3 = Color3.fromRGB(60,60,60)
+down.TextColor3 = Color3.new(1,1,1)
+down.Font = Enum.Font.SourceSansBold
+down.TextSize = 18
+
+local del = Instance.new("TextButton", f)
+del.Size = UDim2.new(1, -20, 0, 40)
+del.Position = UDim2.new(0,10,0,110)
+del.Text = "Удалить стены"
+del.BackgroundColor3 = Color3.fromRGB(150,30,30)
+del.TextColor3 = Color3.new(1,1,1)
+del.Font = Enum.Font.SourceSansBold
+del.TextSize = 16
+
+local hide = Instance.new("TextButton", f)
+hide.Size = UDim2.new(0, 20, 0, 20)
+hide.Position = UDim2.new(1, -25, 0, 5)
+hide.Text = "-"
+hide.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+hide.TextColor3 = Color3.new(1,1,1)
+hide.Font = Enum.Font.SourceSans
+hide.TextSize = 16
+
+local mini = Instance.new("TextButton", g)
+mini.Size = UDim2.new(0, 100, 0, 30)
+mini.Position = UDim2.new(0, 10, 0, 10)
+mini.Text = "Меню"
+mini.Visible = false
+mini.BackgroundColor3 = Color3.fromRGB(50,50,50)
+mini.TextColor3 = Color3.new(1,1,1)
+mini.Font = Enum.Font.SourceSansBold
+mini.TextSize = 16
+mini.Active = true
+mini.Draggable = true
+
+up.MouseButton1Click:Connect(function()
+	h.PlatformStand = false
+	hrp.Anchored = false
+	hrp.CFrame = hrp.CFrame + Vector3.new(0, 1000, 0)
+	task.wait(0.05)
+	hrp.CFrame = CFrame.new(hrp.Position.X, 2000, hrp.Position.Z)
+end)
+
+down.MouseButton1Click:Connect(function()
+	h.PlatformStand = false
+	hrp.Anchored = false
+	hrp.CFrame = CFrame.new(hrp.Position.X, 5, hrp.Position.Z)
+end)
+
+del.MouseButton1Click:Connect(function()
+	for _, v in ipairs(workspace:GetDescendants()) do
+		if v:IsA("BasePart") and (v.Name:lower():find("wall") or v.Name:lower():find("barrier")) then
+			v:Destroy()
+		end
+	end
+end)
+
+hide.MouseButton1Click:Connect(function()
+	f.Visible = false
+	mini.Visible = true
+end)
+
+mini.MouseButton1Click:Connect(function()
+	f.Visible = true
+	mini.Visible = false
+end)
+
+uis.InputBegan:Connect(function(i,g)
+	if g then return end
+	if i.KeyCode == Enum.KeyCode.RightShift then
+		local v = f.Visible or mini.Visible
+		f.Visible = not v
+		mini.Visible = v
+	end
+end)
