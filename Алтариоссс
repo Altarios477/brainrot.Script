@@ -1,0 +1,32 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Altarios477/brainrot.Script/refs/heads/main/%D0%B5%D1%8C%D0%B0%D1%8C%D0%B0%D1%8C"))()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+UIS.InputBegan:Connect(function(i, g)
+    if g then return end
+    if i.KeyCode == Enum.KeyCode.V then
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        -- Поиск самого верхнего барьера
+        local maxY = 0
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Part") and v.Transparency == 1 and v.CanCollide and v.Position.Y > 100 and v.Size.Y < 20 then
+                if v.Position.Y > maxY then
+                    maxY = v.Position.Y
+                end
+            end
+        end
+
+        -- Телепорт выше найденного барьера
+        if maxY > 0 then
+            hrp.CFrame = CFrame.new(hrp.Position.X, maxY + 10, hrp.Position.Z)
+        else
+            -- Если барьер не найден — просто тп на 125
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, 125, 0)
+        end
+    end
+end)
