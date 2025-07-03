@@ -1,0 +1,60 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0, 30, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+
+local state = {
+	noclip = false,
+	tpup = false
+}
+
+local function addBtn(textOn, textOff, posY, key, func)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(1, 0, 0, 40)
+	btn.Position = UDim2.new(0, 0, 0, posY)
+	btn.Text = textOff
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 18
+	btn.MouseButton1Click:Connect(function()
+		state[key] = not state[key]
+		btn.Text = state[key] and textOn or textOff
+		if func then func(state[key]) end
+	end)
+end
+
+-- Noclip
+addBtn("Noclip: ON", "Noclip: OFF", 0, "noclip")
+RunService.Stepped:Connect(function()
+	if state.noclip and lp.Character then
+		for _, v in pairs(lp.Character:GetDescendants()) do
+			if v:IsA("BasePart") and v.CanCollide then
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- TP вверх: включение = авто телепорт каждые 0.5 сек
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		if state.tpup then
+			local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local pos = hrp.Position + Vector3.new(0, 5, 0)
+				TweenService:Create(hrp, TweenInfo.new(0.3), {CFrame = CFrame.new(pos)}):Play()
+			end
+		end
+	end
+end)
+
+addBtn("TP UP: ON", "TP UP: OFF", 45, "tpup")
