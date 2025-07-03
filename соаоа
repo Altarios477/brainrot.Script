@@ -1,0 +1,21 @@
+-- ✅ Brainrot GUI: Noclip + TP Up + TP to Base
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+local noclipEnabled = false
+
+-- 🖼 GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "BrainrotTools"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0, 20, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+
+local function addButton(text, y, callback)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size =
