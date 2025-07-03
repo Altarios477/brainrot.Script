@@ -1,0 +1,60 @@
+setfpscap(60)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+local noclip = false
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "BrainrotGUI"
+
+-- UI Frame
+local frame = Instance.new("Frame", gui)
+frame.Position = UDim2.new(0, 10, 0, 100)
+frame.Size = UDim2.new(0, 200, 0, 140)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+
+-- Utility: Button Creator
+local function createButton(text, pos, callback)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(1, 0, 0, 30)
+	btn.Position = UDim2.new(0, 0, 0, pos)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.MouseButton1Click:Connect(callback)
+	return btn
+end
+
+-- Teleport with Tween (safe)
+local function tweenTP(pos)
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local dist = (hrp.Position - pos).Magnitude
+	local tween = TweenService:Create(hrp, TweenInfo.new(math.clamp(dist / 80, 0.5, 3)), {
+		CFrame = CFrame.new(pos)
+	})
+	tween:Play()
+	tween.Completed:Wait()
+end
+
+-- Buttons
+createButton("⬆️ TP ВЫСОТА", 0, function()
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		tweenTP(hrp.Position + Vector3.new(0, 100, 0))
+	end
+end)
+
+createButton("🏠 TP НА БАЗУ", 35, function()
+	tweenTP(Vector3.new(0, 20, 0)) -- измени координаты базы, если они другие
+end)
+
+createButton("🚪 Noclip: OFF", 70, function(btn)
+	noclip = not noclip
+	btn.Text = "🚪 Noclip: " .. (noclip and "ON" or "OFF")
+end)
+
+-- Мягкий Noclip обход (антиоткат)
