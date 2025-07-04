@@ -1,0 +1,70 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Altarios477/Uilib/main/AltariosUI"))()
+local Window = Library:CreateWindow("Altarios_Script")
+local Main = Window:CreateTab("Main")
+local Toggles = {
+    Noclip = false,
+    TpUp = false,
+    AutoBuy = false
+}
+
+-- Функция Noclip
+game:GetService("RunService").Stepped:Connect(function()
+    if Toggles.Noclip then
+        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Noclip Toggle
+Main:CreateToggle("Noclip", function(state)
+    Toggles.Noclip = state
+end)
+
+-- Телепорт вверх
+Main:CreateToggle("TP Up (bypass)", function(state)
+    Toggles.TpUp = state
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if Toggles.TpUp then
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position.X, 9999, char.HumanoidRootPart.Position.Z)
+            end
+        end
+    end
+end)
+
+-- AutoBuy Cocfanto Elefanto
+Main:CreateToggle("AutoBuy Cocfanto Elefanto", function(state)
+    Toggles.AutoBuy = state
+end)
+
+local function buyCocfanto()
+    for _, npc in pairs(workspace:GetDescendants()) do
+        if npc:IsA("Model") and npc.Name == "Cocfanto Elefanto" and npc:FindFirstChild("Head") then
+            local prompt = npc.Head:FindFirstChildWhichIsA("ProximityPrompt")
+            if prompt then
+                fireproximityprompt(prompt)
+            end
+        end
+    end
+end
+
+-- Цикл покупки
+task.spawn(function()
+    while task.wait(1) do
+        if Toggles.AutoBuy then
+            pcall(buyCocfanto)
+        end
+    end
+end)
+
+-- GUI скрытие
+Main:CreateButton("Скрыть GUI (оставить плашку)", function()
+    Library:ToggleUI()
+end)
