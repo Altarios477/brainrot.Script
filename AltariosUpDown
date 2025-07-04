@@ -1,0 +1,51 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Altarios477/Uilib/main/AltariosUI"))()
+local Window = Library:CreateWindow("🧠 Altarios ☁️ Teleport ✨")
+local Tab = Window:CreateTab("📍 TP")
+
+local HEIGHT_OFFSET = 130
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+local lastGroundPos = nil
+
+local function createSkyPlatform()
+    local existing = workspace:FindFirstChild("AltariosSkyPlatform")
+    if existing then existing:Destroy() end
+
+    local p = Instance.new("Part")
+    p.Name = "AltariosSkyPlatform"
+    p.Anchored = true
+    p.Size = Vector3.new(50, 1, 50)
+    p.Position = Vector3.new(root.Position.X, root.Position.Y + HEIGHT_OFFSET, root.Position.Z)
+    p.Transparency = 1
+    p.CanCollide = true
+    p.Parent = workspace
+    return p
+end
+
+local function tpUp()
+    lastGroundPos = root.Position
+    local plat = createSkyPlatform()
+    task.wait(0.1)
+    root.CFrame = CFrame.new(plat.Position + Vector3.new(0, 3, 0))
+end
+
+local function tpDown()
+    if lastGroundPos then
+        root.CFrame = CFrame.new(lastGroundPos + Vector3.new(0, 3, 0))
+    end
+end
+
+Tab:CreateButton("🟢 TP Вверх", function()
+    tpUp()
+end).Button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+
+Tab:CreateButton("🔴 TP Вниз", function()
+    tpDown()
+end).Button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+
+Tab:CreateButton("🟡 Скрыть меню", function()
+    Library:ToggleUI()
+end).Button.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+
+Window.Main.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
