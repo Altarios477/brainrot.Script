@@ -1,0 +1,79 @@
+local Library = {}
+Library.__index = Library
+
+function Library:CreateWindow(name)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "AltariosUI"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = game:GetService("CoreGui")
+
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Size = UDim2.new(0, 250, 0, 280)
+    Main.Position = UDim2.new(0, 20, 0.5, -140)
+    Main.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    Main.BorderSizePixel = 0
+    Main.Active = true
+    Main.Draggable = true
+    Main.Parent = ScreenGui
+
+    local Tabs = {}
+
+    function Library:CreateTab(tabname)
+        local TabFrame = Instance.new("Frame")
+        TabFrame.Size = UDim2.new(1, 0, 1, 0)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.Parent = Main
+
+        local Layout = Instance.new("UIListLayout")
+        Layout.Padding = UDim.new(0, 4)
+        Layout.FillDirection = Enum.FillDirection.Vertical
+        Layout.SortOrder = Enum.SortOrder.LayoutOrder
+        Layout.Parent = TabFrame
+
+        local Tab = {}
+
+        function Tab:CreateButton(text, callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, -10, 0, 30)
+            Button.Position = UDim2.new(0, 5, 0, 0)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Button.TextColor3 = Color3.new(1, 1, 1)
+            Button.Font = Enum.Font.SourceSans
+            Button.TextSize = 16
+            Button.Text = text
+            Button.Parent = TabFrame
+
+            Button.MouseButton1Click:Connect(function()
+                pcall(callback)
+            end)
+
+            return Button
+        end
+
+        Tabs[tabname] = Tab
+        return Tab
+    end
+
+    function Library:ToggleUI()
+        Main.Visible = not Main.Visible
+    end
+
+    Library.Main = Main
+    return Library
+end
+
+local GUI = Library:CreateWindow("🧠")
+local Tab = GUI:CreateTab("☁️")
+
+Tab:CreateButton("TP Вверх", function()
+    print("Вверх")
+end)
+
+Tab:CreateButton("TP Вниз", function()
+    print("Вниз")
+end)
+
+Tab:CreateButton("Скрыть", function()
+    Library:ToggleUI()
+end)
