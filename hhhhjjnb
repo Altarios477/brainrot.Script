@@ -1,0 +1,73 @@
+loadstring([[
+local p = game:GetService("Players").LocalPlayer
+local d = 120 -- поднимает выше барьера
+
+function up()
+    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        p.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, d, 0)
+    end
+end
+
+function down()
+    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        local r = p.Character.HumanoidRootPart
+        local rp = RaycastParams.new()
+        rp.FilterDescendantsInstances = {p.Character}
+        rp.FilterType = Enum.RaycastFilterType.Blacklist
+        local res = workspace:Raycast(r.Position, Vector3.new(0, -500, 0), rp)
+        if res then
+            r.CFrame = CFrame.new(res.Position + Vector3.new(0, 5, 0))
+        end
+    end
+end
+
+local s = Instance.new("ScreenGui", p:WaitForChild("PlayerGui"))
+s.ResetOnSpawn = false
+
+local main = Instance.new("Frame", s)
+main.Size = UDim2.new(0, 150, 0, 170)
+main.Position = UDim2.new(0, 50, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+main.BorderSizePixel = 0
+
+local upBtn = Instance.new("TextButton", main)
+upBtn.Size = UDim2.new(1, -20, 0, 40)
+upBtn.Position = UDim2.new(0, 10, 0, 10)
+upBtn.Text = "ТП вверх"
+upBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+upBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+upBtn.MouseButton1Click:Connect(up)
+
+local downBtn = Instance.new("TextButton", main)
+downBtn.Size = UDim2.new(1, -20, 0, 40)
+downBtn.Position = UDim2.new(0, 10, 0, 60)
+downBtn.Text = "ТП вниз"
+downBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.MouseButton1Click:Connect(down)
+
+local hideBtn = Instance.new("TextButton", main)
+hideBtn.Size = UDim2.new(1, -20, 0, 30)
+hideBtn.Position = UDim2.new(0, 10, 0, 110)
+hideBtn.Text = "Скрыть меню"
+hideBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+hideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local showBtn = Instance.new("TextButton", s)
+showBtn.Size = UDim2.new(0, 120, 0, 30)
+showBtn.Position = UDim2.new(0, 10, 0, 10)
+showBtn.Text = "Открыть меню"
+showBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+showBtn.TextColor3 = Color3.new(1,1,1)
+showBtn.Visible = false
+
+hideBtn.MouseButton1Click:Connect(function()
+	main.Visible = false
+	showBtn.Visible = true
+end)
+
+showBtn.MouseButton1Click:Connect(function()
+	main.Visible = true
+	showBtn.Visible = false
+end)
+]])()
