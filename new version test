@@ -1,0 +1,170 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- 🟩 GUI начало (если у тебя уже есть, оставь этот блок или замени на свой)
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "Altarios_Script"
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 120, 0, 30)
+ToggleButton.Position = UDim2.new(0, 10, 0, 100)
+ToggleButton.Text = "📜 Меню"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 250)
+MainFrame.Position = UDim2.new(0, 10, 0, 140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+
+ToggleButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
+
+function CreateToggle(text, callback)
+	local button = Instance.new("TextButton", MainFrame)
+	button.Size = UDim2.new(1, -10, 0, 30)
+	button.Position = UDim2.new(0, 5, 0, (#MainFrame:GetChildren() - 1) * 35)
+	button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Text = "⛔ " .. text
+	local state = false
+
+	button.MouseButton1Click:Connect(function()
+		state = not state
+		button.Text = (state and "✅ " or "⛔ ") .. text
+		callback(state)
+	end)
+end
+-- 🟩 GUI конец
+
+-- 🟥 Noclip
+local noclipConnection
+CreateToggle("Noclip", function(state)
+	if state then
+		noclipConnection = RunService.Stepped:Connect(function()
+			for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end)
+	else
+		if noclipConnection then
+			noclipConnection:Disconnect()
+		end
+	end
+end)
+
+-- 🟨 TP вверх
+CreateToggle("TP вверх", function(state)
+	if state then
+		LocalPlayer.Character:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 15, 0))
+	end
+end)
+
+-- 🟦 ESP на игроков
+local espEnabled = false
+local function createESP(player)
+	if player == LocalPlayer then return end
+	local char = player.Character
+	if not char then return end
+	if char:FindFirstChild("Head") and not char.Head:FindFirstChild("AltariosESP") then
+		local esp = Instance.new("BillboardGui", char.Head)
+		esp.Name = "AltariosESP"
+		esp.Size = UDim2.new(0, 100, 0, 40)
+		esp.Adornee = char.Head
+		esp.AlwaysOnTop = true
+		esp.StudsOffset = Vector3.new(0, 2, 0)
+
+		local label = Instance.new("TextLabel", esp)
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.Text = player.Name
+		label.TextColor3 = Color3.fromRGB(255, 50, 50)
+		label.TextScaled = true
+		label.BackgroundTransparency = 1
+	end
+end
+
+CreateToggle("ESP на игроков", function(state)
+	espEnabled = state
+	if state then
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer then
+				createESP(p)
+			end
+		end
+		Players.PlayerAdded:Connect(function(p)
+			p.CharacterAdded:Connect(function()
+				wait(1)
+				if espEnabled then
+					createESP(p)
+				end
+			end)
+		end)
+	else
+		for _, p in pairs(Players:GetPlayers()) do
+			if p.Character and p.Character:FindFirstChild("Head") then
+				local esp = p.Character.Head:FindFirstChild("AltariosESP")
+				if esp then
+					esp:Destroy()
+				end
+			end
+		end
+	end
+end)
+
+-- 🟪 Таймер над базами
+local baseTimers = {}
+local function addBaseTimer(base)
+	if base:FindFirstChild("BasePart") and base:FindFirstChild("OpenTime") and not base:FindFirstChild("TimerGui") then
+		local gui = Instance.new("BillboardGui", base)
+		gui.Name = "TimerGui"
+		gui.Adornee = base.BasePart
+		gui.Size = UDim2.new(0, 100, 0, 30)
+		gui.StudsOffset = Vector3.new(0, 4, 0)
+		gui.AlwaysOnTop = true
+
+		local label = Instance.new("TextLabel", gui)
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.fromRGB(255, 255, 0)
+		label.TextStrokeTransparency = 0.3
+		label.Font = Enum.Font.SourceSansBold
+		label.TextScaled = true
+		label.Text = "..."
+
+		table.insert(baseTimers, {base = base, label = label})
+	end
+end
+
+CreateToggle("Таймеры баз", function(state)
+	if state then
+		for _, obj in pairs(Workspace:GetChildren()) do
+			if obj:IsA("Model") and obj:FindFirstChild("BasePart") and obj:FindFirstChild("OpenTime") then
+				addBaseTimer(obj)
+			end
+		end
+
+		RunService.RenderStepped:Connect(function()
+			for _, t in pairs(baseTimers) do
+				if t.base:FindFirstChild("OpenTime") then
+					local left = math.floor(t.base.OpenTime.Value - tick())
+					t.label.Text = left > 0 and ("Откроется через: " .. left .. "с") or "Открыта!"
+				end
+			end
+		end)
+	else
+		for _, t in pairs(baseTimers) do
+			if t.label and t.label.Parent then
+				t.label.Parent:Destroy()
+			end
+		end
+		baseTimers = {}
+	end
+end)
