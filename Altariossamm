@@ -1,0 +1,21 @@
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Button = Instance.new("TextButton", ScreenGui)
+
+Button.Size = UDim2.new(0, 120, 0, 40)
+Button.Position = UDim2.new(0, 20, 0.5, -20)
+Button.Text = "⬅️ ТП влево"
+Button.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.SourceSansBold
+Button.TextSize = 18
+Button.BorderSizePixel = 0
+Button.AutoButtonColor = true
+Button.BackgroundTransparency = 0.1
+Button.Name = "TPLeftButton"
+
+Button.MouseButton1Click:Connect(function()
+	local p = game.Players.LocalPlayer
+	local c = p.Character or p.CharacterAdded:Wait()
+	local hrp = c:WaitForChild("HumanoidRootPart")
+	hrp.CFrame = hrp.CFrame + (-workspace.CurrentCamera.CFrame.RightVector * 10)
+end)
