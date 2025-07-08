@@ -1,0 +1,60 @@
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local placeId = game.PlaceId
+local checkedServers = {}
+local specialBrainrots = {
+    "Тралалела", "Tralalelo", "Медуза", "Грарам", "Марарам", "Lava", "Лавака", "Генерал", "Череп", "Skull", "Boss", "Босс"
+}
+
+local function hasSpecialBrainrot()
+    for _, player in pairs(Players:GetPlayers()) do
+        local char = player.Character
+        if char and char:FindFirstChild("Head") then
+            for _, obj in pairs(char.Head:GetChildren()) do
+                if obj:IsA("BillboardGui") or obj:IsA("TextLabel") then
+                    local text = obj.Text or (obj:FindFirstChild("TextLabel") and obj.TextLabel.Text)
+                    if text then
+                        for _, name in pairs(specialBrainrots) do
+                            if string.find(string.lower(text), string.lower(name)) then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function hopServers()
+    local cursor = ""
+    while true do
+        local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100&sortOrder=Asc&cursor=" .. cursor
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet(url))
+        end)
+        if success and result and result.data then
+            for _, server in pairs(result.data) do
+                if server.playing > 0 and not checkedServers[server.id] then
+                    checkedServers[server.id] = true
+                    TeleportService:TeleportToPlaceInstance(placeId, server.id, LocalPlayer)
+                    wait(10)
+                end
+            end
+            if result.nextPageCursor then
+                cursor = result.nextPageCursor
+            else
+                break
+            end
+        else
+            break
+        end
+    end
+end
+
+if not hasSpecialBrainrot() then
+    hopServers()
+end
