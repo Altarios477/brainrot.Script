@@ -1,0 +1,23 @@
+local g = Instance.new("ScreenGui", game.CoreGui)
+local f = Instance.new("Frame", g)
+f.Size = UDim2.new(0, 140, 0, 60)
+f.Position = UDim2.new(0, 20, 0.5, -30)
+f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+f.BackgroundTransparency = 0.2
+f.BorderSizePixel = 0
+
+local b = Instance.new("TextButton", f)
+b.Size = UDim2.new(1, 0, 1, 0)
+b.Text = "⬅️ ТП влево"
+b.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+b.TextColor3 = Color3.new(1, 1, 1)
+b.Font = Enum.Font.SourceSansBold
+b.TextSize = 18
+b.BorderSizePixel = 0
+
+b.MouseButton1Click:Connect(function()
+	local p = game.Players.LocalPlayer
+	local c = p.Character or p.CharacterAdded:Wait()
+	local hrp = c:WaitForChild("HumanoidRootPart")
+	hrp.CFrame = hrp.CFrame + (-workspace.CurrentCamera.CFrame.RightVector * 10)
+end)
