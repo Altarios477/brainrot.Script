@@ -1,0 +1,80 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+local noclip = false
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "Altarios_Script"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 160)
+frame.Position = UDim2.new(0, 40, 0, 120)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Active = true
+frame.Draggable = true
+
+local function btn(name, y, callback)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.new(1, 0, 0, 40)
+	b.Position = UDim2.new(0, 0, 0, y)
+	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.SourceSans
+	b.TextSize = 18
+	b.Text = name
+	b.MouseButton1Click:Connect(callback)
+	return b
+end
+
+local noclipBtn = btn("🚪 Noclip: OFF", 0, function()
+	noclip = not noclip
+	noclipBtn.Text = "🚪 Noclip: " .. (noclip and "ON" or "OFF")
+end)
+
+RunService.Stepped:Connect(function()
+	if noclip and lp.Character then
+		for _,v in pairs(lp.Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+local tpActive = false
+local tpDownActive = false
+
+local tpUpBtn = btn("⬆️ TP ВВЕРХ: OFF", 45, function()
+	tpActive = not tpActive
+	tpUpBtn.Text = "⬆️ TP ВВЕРХ: " .. (tpActive and "ON" or "OFF")
+	if tpActive and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = lp.Character.HumanoidRootPart
+		local target = hrp.Position + Vector3.new(0,180,0)
+		local tween = TweenService:Create(hrp, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
+		tween:Play()
+		task.wait(2)
+		tpActive = false
+		tpUpBtn.Text = "⬆️ TP ВВЕРХ: OFF"
+	end
+end)
+
+local tpDownBtn = btn("⬇️ TP ВНИЗ: OFF", 90, function()
+	tpDownActive = not tpDownActive
+	tpDownBtn.Text = "⬇️ TP ВНИЗ: " .. (tpDownActive and "ON" or "OFF")
+	if tpDownActive and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = lp.Character.HumanoidRootPart
+		local target = hrp.Position - Vector3.new(0,180,0)
+		local tween = TweenService:Create(hrp, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
+		tween:Play()
+		task.wait(2)
+		tpDownActive = false
+		tpDownBtn.Text = "⬇️ TP ВНИЗ: OFF"
+	end
+end)
+
+local hide = false
+local hideBtn = btn("❌ СКРЫТЬ МЕНЮ", 135, function()
+	hide = not hide
+	frame.Visible = not hide
+end)
