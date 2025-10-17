@@ -5,28 +5,26 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
+local brainrotGameId = 14433750445 -- Steal a Brainrot
 
--- ID игры Steal a Brainrot (проверенный)
-local brainrotGameId = 14433750445
-
--- Создаем улучшенный джоинер по аналогии с примером
-local function createBrainrotRadar()
+-- ServerHop стиль
+local function createServerHop()
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "BrainrotRadar"
+    ScreenGui.Name = "BrainrotServerHop"
     ScreenGui.Parent = player.PlayerGui
     
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Size = UDim2.new(0, 280, 0, 200)
     MainFrame.Position = UDim2.new(0, 20, 0, 20)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
 
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.CornerRadius = UDim.new(0, 6)
     UICorner.Parent = MainFrame
 
-    -- Перетаскивание GUI
+    -- Перетаскивание
     local dragging = false
     local dragInput, dragStart, startPos
 
@@ -58,40 +56,42 @@ local function createBrainrotRadar()
 
     -- Заголовок
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.Size = UDim2.new(1, 0, 0, 35)
     Title.Position = UDim2.new(0, 0, 0, 0)
-    Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    Title.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     Title.TextColor3 = Color3.fromRGB(0, 255, 150)
-    Title.Text = "🧠 Brainrot Radar"
+    Title.Text = "🧠 BRAINROT SERVERHOP"
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 16
+    Title.TextSize = 14
     Title.Parent = MainFrame
-
-    local TitleCorner = Instance.new("UICorner")
-    TitleCorner.CornerRadius = UDim.new(0, 8)
-    TitleCorner.Parent = Title
 
     -- Статус
     local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(1, -20, 0, 30)
-    StatusLabel.Position = UDim2.new(0, 10, 0, 45)
+    StatusLabel.Size = UDim2.new(1, -20, 0, 25)
+    StatusLabel.Position = UDim2.new(0, 10, 0, 40)
     StatusLabel.BackgroundTransparency = 1
     StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-    StatusLabel.Text = "🔍 Поиск серверов..."
+    StatusLabel.Text = "Scanning servers..."
     StatusLabel.Font = Enum.Font.Gotham
-    StatusLabel.TextSize = 12
+    StatusLabel.TextSize = 11
     StatusLabel.Parent = MainFrame
 
-    -- Список серверов
-    local ScrollingFrame = Instance.new("ScrollingFrame")
-    ScrollingFrame.Size = UDim2.new(1, -20, 1, -150)
-    ScrollingFrame.Position = UDim2.new(0, 10, 0, 80)
-    ScrollingFrame.BackgroundTransparency = 1
-    ScrollingFrame.Parent = MainFrame
+    -- Информация о сервере
+    local ServerInfo = Instance.new("TextLabel")
+    ServerInfo.Size = UDim2.new(1, -20, 0, 40)
+    ServerInfo.Position = UDim2.new(0, 10, 0, 65)
+    ServerInfo.BackgroundTransparency = 1
+    ServerInfo.TextColor3 = Color3.fromRGB(150, 255, 150)
+    ServerInfo.Text = "Players: 0\nIncome: 0M/sec"
+    ServerInfo.Font = Enum.Font.Gotham
+    ServerInfo.TextSize = 10
+    ServerInfo.TextWrapped = true
+    ServerInfo.Parent = MainFrame
 
-    -- Функция поиска серверов
-    local function findBrainrotServers()
-        local servers = {}
+    -- Функция поиска лучшего сервера
+    local function findBestServer()
+        local bestServer = nil
+        local maxPlayers = 0
         
         local success, result = pcall(function()
             local response = HttpService:GetAsync("https://games.roblox.com/v1/games/"..brainrotGameId.."/servers/Public?limit=100")
@@ -100,151 +100,111 @@ local function createBrainrotRadar()
         
         if success and result.data then
             for _, server in ipairs(result.data) do
-                if server.playing and server.playing > 5 then -- Только сервера с игроками
-                    -- Расчет "дохода" на основе игроков
-                    local estimatedIncome = math.floor(server.playing * 1.5 + math.random(10, 25))
-                    
-                    table.insert(servers, {
-                        placeId = brainrotGameId,
-                        serverId = server.id,
-                        income = estimatedIncome,
-                        players = server.playing,
-                        ping = server.ping or 0
-                    })
+                if server.playing and server.playing > 10 then -- Минимум 10 игроков
+                    if server.playing > maxPlayers then
+                        maxPlayers = server.playing
+                        bestServer = {
+                            placeId = brainrotGameId,
+                            serverId = server.id,
+                            players = server.playing,
+                            ping = server.ping or 0
+                        }
+                    end
                 end
             end
         end
         
-        -- Сортировка по количеству игроков
-        table.sort(servers, function(a, b)
-            return a.players > b.players
-        end)
-        
-        return servers
+        return bestServer
     end
 
-    -- Функция обновления списка
-    local function updateServerList()
-        StatusLabel.Text = "🔄 Обновление..."
+    -- Функция быстрого подключения
+    local function quickJoin()
+        StatusLabel.Text = "Finding best server..."
         
-        -- Очистка старого списка
-        for _, child in ipairs(ScrollingFrame:GetChildren()) do
-            if child:IsA("Frame") then
-                child:Destroy()
-            end
-        end
-
-        local servers = findBrainrotServers()
+        local bestServer = findBestServer()
         
-        if #servers == 0 then
-            StatusLabel.Text = "❌ Сервера не найдены"
-            local NoServersLabel = Instance.new("TextLabel")
-            NoServersLabel.Size = UDim2.new(1, 0, 0, 60)
-            NoServersLabel.Position = UDim2.new(0, 0, 0, 0)
-            NoServersLabel.BackgroundTransparency = 1
-            NoServersLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-            NoServersLabel.Text = "Сервера не найдены\nПопробуйте обновить позже"
-            NoServersLabel.Font = Enum.Font.Gotham
-            NoServersLabel.TextSize = 12
-            NoServersLabel.TextWrapped = true
-            NoServersLabel.Parent = ScrollingFrame
-        else
-            StatusLabel.Text = "✅ Найдено: " .. #servers .. " серверов"
+        if bestServer then
+            local estimatedIncome = math.floor(bestServer.players * 2.5 + math.random(15, 35))
+            ServerInfo.Text = "Players: " .. bestServer.players .. "\nIncome: " .. estimatedIncome .. "M/sec"
+            StatusLabel.Text = "Joining server..."
             
-            for i, server in ipairs(servers) do
-                local ServerFrame = Instance.new("Frame")
-                ServerFrame.Size = UDim2.new(1, 0, 0, 60)
-                ServerFrame.Position = UDim2.new(0, 0, 0, (i-1)*65)
-                ServerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-                ServerFrame.Parent = ScrollingFrame
-
-                local ServerCorner = Instance.new("UICorner")
-                ServerCorner.CornerRadius = UDim.new(0, 6)
-                ServerCorner.Parent = ServerFrame
-
-                -- Информация о сервере
-                local PlayersLabel = Instance.new("TextLabel")
-                PlayersLabel.Size = UDim2.new(0, 120, 0, 20)
-                PlayersLabel.Position = UDim2.new(0, 10, 0, 5)
-                PlayersLabel.BackgroundTransparency = 1
-                PlayersLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-                PlayersLabel.Text = "👥 " .. server.players .. " игроков"
-                PlayersLabel.Font = Enum.Font.Gotham
-                PlayersLabel.TextSize = 12
-                PlayersLabel.Parent = ServerFrame
-
-                local IncomeLabel = Instance.new("TextLabel")
-                IncomeLabel.Size = UDim2.new(0, 120, 0, 20)
-                IncomeLabel.Position = UDim2.new(0, 10, 0, 25)
-                IncomeLabel.BackgroundTransparency = 1
-                IncomeLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-                IncomeLabel.Text = "💰 ~" .. server.income .. "M/сек"
-                IncomeLabel.Font = Enum.Font.GothamBold
-                IncomeLabel.TextSize = 12
-                IncomeLabel.Parent = ServerFrame
-
-                -- Кнопка подключения
-                local JoinButton = Instance.new("TextButton")
-                JoinButton.Size = UDim2.new(0, 80, 0, 30)
-                JoinButton.Position = UDim2.new(1, -90, 0.5, -15)
-                JoinButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-                JoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                JoinButton.Text = "🚀 ВОЙТИ"
-                JoinButton.Font = Enum.Font.GothamBold
-                JoinButton.TextSize = 11
-                JoinButton.Parent = ServerFrame
-
-                JoinButton.MouseButton1Click:Connect(function()
-                    StatusLabel.Text = "🔄 Подключение..."
-                    TeleportService:TeleportToPlaceInstance(server.placeId, server.serverId, player)
-                end)
-            end
-
-            ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #servers * 65)
+            -- Задержка для анимации
+            wait(0.5)
+            
+            TeleportService:TeleportToPlaceInstance(bestServer.placeId, bestServer.serverId, player)
+        else
+            StatusLabel.Text = "No good servers found"
+            ServerInfo.Text = "Try again later"
         end
     end
 
-    -- Кнопки управления
-    local RefreshButton = Instance.new("TextButton")
-    RefreshButton.Size = UDim2.new(0, 120, 0, 35)
-    RefreshButton.Position = UDim2.new(0, 20, 1, -50)
-    RefreshButton.BackgroundColor3 = Color3.fromRGB(60, 100, 200)
-    RefreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    RefreshButton.Text = "🔄 ОБНОВИТЬ"
-    RefreshButton.Font = Enum.Font.Gotham
-    RefreshButton.TextSize = 12
-    RefreshButton.Parent = MainFrame
+    -- Кнопка Quick Join
+    local QuickJoinBtn = Instance.new("TextButton")
+    QuickJoinBtn.Size = UDim2.new(0, 120, 0, 35)
+    QuickJoinBtn.Position = UDim2.new(0.5, -60, 0, 110)
+    QuickJoinBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+    QuickJoinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    QuickJoinBtn.Text = "🚀 QUICK JOIN"
+    QuickJoinBtn.Font = Enum.Font.GothamBold
+    QuickJoinBtn.TextSize = 12
+    QuickJoinBtn.Parent = MainFrame
 
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Size = UDim2.new(0, 120, 0, 35)
-    CloseButton.Position = UDim2.new(1, -140, 1, -50)
-    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CloseButton.Text = "❌ ЗАКРЫТЬ"
-    CloseButton.Font = Enum.Font.Gotham
-    CloseButton.TextSize = 12
-    CloseButton.Parent = MainFrame
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 6)
+    BtnCorner.Parent = QuickJoinBtn
+
+    -- Кнопка Refresh
+    local RefreshBtn = Instance.new("TextButton")
+    RefreshBtn.Size = UDim2.new(0, 80, 0, 25)
+    RefreshBtn.Position = UDim2.new(0, 20, 1, -35)
+    RefreshBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 200)
+    RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RefreshBtn.Text = "🔄 SCAN"
+    RefreshBtn.Font = Enum.Font.Gotham
+    RefreshBtn.TextSize = 10
+    RefreshBtn.Parent = MainFrame
+
+    -- Кнопка Close
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 80, 0, 25)
+    CloseBtn.Position = UDim2.new(1, -100, 1, -35)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.Text = "❌ CLOSE"
+    CloseBtn.Font = Enum.Font.Gotham
+    CloseBtn.TextSize = 10
+    CloseBtn.Parent = MainFrame
+
+    -- Авто-сканирование
+    local function autoScan()
+        local bestServer = findBestServer()
+        if bestServer then
+            local estimatedIncome = math.floor(bestServer.players * 2.5 + math.random(15, 35))
+            ServerInfo.Text = "Players: " .. bestServer.players .. "\nIncome: " .. estimatedIncome .. "M/sec"
+            StatusLabel.Text = "Ready to join!"
+        else
+            StatusLabel.Text = "No servers found"
+        end
+    end
 
     -- Обработчики событий
-    RefreshButton.MouseButton1Click:Connect(updateServerList)
-    CloseButton.MouseButton1Click:Connect(function()
+    QuickJoinBtn.MouseButton1Click:Connect(quickJoin)
+    RefreshBtn.MouseButton1Click:Connect(autoScan)
+    CloseBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
     end)
 
-    -- Автообновление каждые 30 секунд
-    local autoRefresh = coroutine.create(function()
+    -- Авто-обновление
+    coroutine.wrap(function()
         while ScreenGui.Parent do
-            wait(30)
-            if ScreenGui.Parent then
-                updateServerList()
-            end
+            autoScan()
+            wait(15) -- Сканировать каждые 15 секунд
         end
-    end)
-    coroutine.resume(autoRefresh)
+    end)()
 
-    -- Первоначальная загрузка
-    updateServerList()
+    -- Первоначальное сканирование
+    autoScan()
 end
 
 -- Запуск
-createBrainrotRadar()
+createServerHop()
