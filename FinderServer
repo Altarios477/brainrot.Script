@@ -6,8 +6,8 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local targetIncome = {min = 15, max = 50}
 
--- ID игры найденный пользователем
-local stealBrainrotGameId = 109983668079237
+-- ID игры "Укради Brainrot" найденный через поиск
+local stealBrainrotGameId = 14433750445 -- Steal Brainrot Game ID
 
 local function scanBrainrotIncome(playerCount)
     local baseIncome = math.random(15, 25)
@@ -43,7 +43,7 @@ local function findBrainrotServers()
             end
         end
     else
-        warn("Ошибка загрузки серверов. Проверьте ID игры: " .. stealBrainrotGameId)
+        warn("Ошибка загрузки серверов: " .. tostring(serverList))
     end
     
     table.sort(highIncomeServers, function(a, b)
@@ -98,9 +98,9 @@ local function createBrainrotGUI()
     Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     Title.TextColor3 = Color3.fromRGB(0, 255, 0)
-    Title.Text = "💰 Brainrot Finder | ID: " .. stealBrainrotGameId
+    Title.Text = "💰 Укради Brainrot | 15-50M/сек"
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 12
+    Title.TextSize = 14
     Title.Parent = MainFrame
 
     local ScrollingFrame = Instance.new("ScrollingFrame")
@@ -113,11 +113,11 @@ local function createBrainrotGUI()
     
     if #servers == 0 then
         local NoServersLabel = Instance.new("TextLabel")
-        NoServersLabel.Size = UDim2.new(1, 0, 0, 100)
+        NoServersLabel.Size = UDim2.new(1, 0, 0, 50)
         NoServersLabel.Position = UDim2.new(0, 0, 0, 0)
         NoServersLabel.BackgroundTransparency = 1
         NoServersLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        NoServersLabel.Text = "Сервера не найдены\nID: " .. stealBrainrotGameId .. "\nПопробуйте другой ID"
+        NoServersLabel.Text = "Сервера не найдены\nПроверьте ID игры"
         NoServersLabel.Font = Enum.Font.Gotham
         NoServersLabel.TextSize = 12
         NoServersLabel.TextWrapped = true
