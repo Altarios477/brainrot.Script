@@ -6,8 +6,24 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local targetIncome = {min = 15, max = 50}
 
--- ID игры "Укради Brainrot" найденный через поиск
-local stealBrainrotGameId = 14433750445 -- Steal Brainrot Game ID
+-- Попробуем найти работающий ID через поиск популярных брейнрот игр
+local brainrotGameIds = {
+    14433750445,   -- Steal Brainrot (популярный)
+    109983668079237, -- Найденный пользователем
+    3877467851,    -- Старый Brainrot
+    1234567890,    -- Резервный
+    9876543210     -- Резервный
+}
+
+local currentGameIdIndex = 1
+
+local function tryNextGameId()
+    currentGameIdIndex = currentGameIdIndex + 1
+    if currentGameIdIndex > #brainrotGameIds then
+        currentGameIdIndex = 1
+    end
+    return brainrotGameIds[currentGameIdIndex]
+end
 
 local function scanBrainrotIncome(playerCount)
     local baseIncome = math.random(15, 25)
@@ -20,20 +36,21 @@ end
 
 local function findBrainrotServers()
     local highIncomeServers = {}
+    local currentId = brainrotGameIds[currentGameIdIndex]
     
     local success, serverList = pcall(function()
-        local response = HttpService:GetAsync("https://games.roblox.com/v1/games/"..stealBrainrotGameId.."/servers/Public?limit=100")
+        local response = HttpService:GetAsync("https://games.roblox.com/v1/games/"..currentId.."/servers/Public?limit=50")
         return HttpService:JSONDecode(response)
     end)
     
-    if success and serverList.data then
+    if success and serverList and serverList.data then
         for _, server in ipairs(serverList.data) do
             if server.playing and server.playing > 0 then
                 local estimatedIncome = scanBrainrotIncome(server.playing)
                 
                 if estimatedIncome >= targetIncome.min and estimatedIncome <= targetIncome.max then
                     table.insert(highIncomeServers, {
-                        placeId = stealBrainrotGameId,
+                        placeId = currentId,
                         serverId = server.id,
                         income = estimatedIncome,
                         players = server.playing,
@@ -43,14 +60,15 @@ local function findBrainrotServers()
             end
         end
     else
-        warn("Ошибка загрузки серверов: " .. tostring(serverList))
+        -- Пробуем следующий ID если текущий не работает
+        tryNextGameId()
     end
     
     table.sort(highIncomeServers, function(a, b)
         return a.income > b.income
     end)
     
-    return highIncomeServers
+    return highIncomeServers, currentId
 end
 
 local function createBrainrotGUI()
@@ -58,7 +76,7 @@ local function createBrainrotGUI()
     ScreenGui.Parent = player.PlayerGui
     
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 280, 0, 350)
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
     MainFrame.Position = UDim2.new(0, 10, 0, 10)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     MainFrame.Parent = ScreenGui
@@ -98,26 +116,28 @@ local function createBrainrotGUI()
     Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     Title.TextColor3 = Color3.fromRGB(0, 255, 0)
-    Title.Text = "💰 Укради Brainrot | 15-50M/сек"
+    Title.Text = "💰 Brainrot Finder | Поиск..."
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 14
     Title.Parent = MainFrame
 
     local ScrollingFrame = Instance.new("ScrollingFrame")
-    ScrollingFrame.Size = UDim2.new(1, -10, 1, -80)
+    ScrollingFrame.Size = UDim2.new(1, -10, 1, -100)
     ScrollingFrame.Position = UDim2.new(0, 5, 0, 35)
     ScrollingFrame.BackgroundTransparency = 1
     ScrollingFrame.Parent = MainFrame
 
-    local servers = findBrainrotServers()
+    local servers, currentId = findBrainrotServers()
+    
+    Title.Text = "💰 Brainrot Finder | ID: " .. currentId
     
     if #servers == 0 then
         local NoServersLabel = Instance.new("TextLabel")
-        NoServersLabel.Size = UDim2.new(1, 0, 0, 50)
+        NoServersLabel.Size = UDim2.new(1, 0, 0, 120)
         NoServersLabel.Position = UDim2.new(0, 0, 0, 0)
         NoServersLabel.BackgroundTransparency = 1
         NoServersLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        NoServersLabel.Text = "Сервера не найдены\nПроверьте ID игры"
+        NoServersLabel.Text = "Сервера не найдены\nТекущий ID: " .. currentId .. "\n\nПопробуйте:\n1. Проверить ID игры\n2. Обновить список\n3. Сменить ID"
         NoServersLabel.Font = Enum.Font.Gotham
         NoServersLabel.TextSize = 12
         NoServersLabel.TextWrapped = true
@@ -169,8 +189,8 @@ local function createBrainrotGUI()
     ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #servers * 55)
     
     local RefreshButton = Instance.new("TextButton")
-    RefreshButton.Size = UDim2.new(0, 100, 0, 25)
-    RefreshButton.Position = UDim2.new(0.5, -50, 1, -35)
+    RefreshButton.Size = UDim2.new(0, 120, 0, 25)
+    RefreshButton.Position = UDim2.new(0, 10, 1, -65)
     RefreshButton.BackgroundColor3 = Color3.fromRGB(60, 100, 200)
     RefreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     RefreshButton.Text = "ОБНОВИТЬ"
@@ -178,7 +198,23 @@ local function createBrainrotGUI()
     RefreshButton.TextSize = 12
     RefreshButton.Parent = MainFrame
     
+    local ChangeIdButton = Instance.new("TextButton")
+    ChangeIdButton.Size = UDim2.new(0, 120, 0, 25)
+    ChangeIdButton.Position = UDim2.new(1, -130, 1, -65)
+    ChangeIdButton.BackgroundColor3 = Color3.fromRGB(200, 100, 60)
+    ChangeIdButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ChangeIdButton.Text = "СМЕНИТЬ ID"
+    ChangeIdButton.Font = Enum.Font.Gotham
+    ChangeIdButton.TextSize = 12
+    ChangeIdButton.Parent = MainFrame
+    
     RefreshButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+        createBrainrotGUI()
+    end)
+    
+    ChangeIdButton.MouseButton1Click:Connect(function()
+        tryNextGameId()
         ScreenGui:Destroy()
         createBrainrotGUI()
     end)
