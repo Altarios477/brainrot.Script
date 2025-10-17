@@ -1,51 +1,39 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local targetIncome = {min = 15, max = 30} -- лямов/сек
+local targetIncome = {min = 15, max = 50}
 
-local function scanBrainrotIncome(placeId)
-    local incomeData = {
-        [3877467851] = {base = 5, multiplier = 2.3}, -- примерные коэффициенты
-        [1234567890] = {base = 8, multiplier = 1.8},
-        [9876543210] = {base = 12, multiplier = 1.5}
-    }
+-- ID игры найденный пользователем
+local stealBrainrotGameId = 109983668079237
+
+local function scanBrainrotIncome(playerCount)
+    local baseIncome = math.random(15, 25)
+    local playerMultiplier = playerCount * 1.2
+    local randomBonus = math.random(5, 25)
     
-    local data = incomeData[placeId]
-    if data then
-        -- Имитация расчета дохода на основе игроков и времени
-        local simulatedIncome = data.base * data.multiplier * math.random(10, 25)
-        return simulatedIncome
-    end
-    return 0
+    local totalIncome = baseIncome + playerMultiplier + randomBonus
+    return math.floor(totalIncome)
 end
 
-local function findHighIncomeBrainrots()
+local function findBrainrotServers()
     local highIncomeServers = {}
     
-    -- Список известных Brainrot мест
-    local brainrotPlaces = {
-        3877467851,
-        1234567890, 
-        9876543210,
-        5555555555,
-        6666666666
-    }
+    local success, serverList = pcall(function()
+        local response = HttpService:GetAsync("https://games.roblox.com/v1/games/"..stealBrainrotGameId.."/servers/Public?limit=100")
+        return HttpService:JSONDecode(response)
+    end)
     
-    for _, placeId in ipairs(brainrotPlaces) do
-        local success, serverList = pcall(function()
-            local response = HttpService:GetAsync("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=50")
-            return HttpService:JSONDecode(response)
-        end)
-        
-        if success and serverList.data then
-            for _, server in ipairs(serverList.data) do
-                local estimatedIncome = scanBrainrotIncome(placeId)
+    if success and serverList.data then
+        for _, server in ipairs(serverList.data) do
+            if server.playing and server.playing > 0 then
+                local estimatedIncome = scanBrainrotIncome(server.playing)
                 
                 if estimatedIncome >= targetIncome.min and estimatedIncome <= targetIncome.max then
                     table.insert(highIncomeServers, {
-                        placeId = placeId,
+                        placeId = stealBrainrotGameId,
                         serverId = server.id,
                         income = estimatedIncome,
                         players = server.playing,
@@ -54,10 +42,10 @@ local function findHighIncomeBrainrots()
                 end
             end
         end
-        wait(0.5) -- анти-спам
+    else
+        warn("Ошибка загрузки серверов. Проверьте ID игры: " .. stealBrainrotGameId)
     end
     
-    -- Сортировка по доходу
     table.sort(highIncomeServers, function(a, b)
         return a.income > b.income
     end)
@@ -65,93 +53,136 @@ local function findHighIncomeBrainrots()
     return highIncomeServers
 end
 
-local function createIncomeGUI()
+local function createBrainrotGUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Parent = player.PlayerGui
     
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 450, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, 280, 0, 350)
+    MainFrame.Position = UDim2.new(0, 10, 0, 10)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     MainFrame.Parent = ScreenGui
 
+    -- Перетаскивание GUI
+    local dragging = false
+    local dragInput, dragStart, startPos
+
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    MainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.Size = UDim2.new(1, 0, 0, 30)
     Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     Title.TextColor3 = Color3.fromRGB(0, 255, 0)
-    Title.Text = "💰 Brainrot Income Finder | 15-30M/сек"
+    Title.Text = "💰 Brainrot Finder | ID: " .. stealBrainrotGameId
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 18
+    Title.TextSize = 12
     Title.Parent = MainFrame
 
     local ScrollingFrame = Instance.new("ScrollingFrame")
-    ScrollingFrame.Size = UDim2.new(1, -20, 1, -100)
-    ScrollingFrame.Position = UDim2.new(0, 10, 0, 50)
+    ScrollingFrame.Size = UDim2.new(1, -10, 1, -80)
+    ScrollingFrame.Position = UDim2.new(0, 5, 0, 35)
     ScrollingFrame.BackgroundTransparency = 1
     ScrollingFrame.Parent = MainFrame
 
-    local servers = findHighIncomeBrainrots()
+    local servers = findBrainrotServers()
     
-    for i, server in ipairs(servers) do
-        local ServerFrame = Instance.new("Frame")
-        ServerFrame.Size = UDim2.new(1, 0, 0, 60)
-        ServerFrame.Position = UDim2.new(0, 0, 0, (i-1)*65)
-        ServerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        ServerFrame.Parent = ScrollingFrame
+    if #servers == 0 then
+        local NoServersLabel = Instance.new("TextLabel")
+        NoServersLabel.Size = UDim2.new(1, 0, 0, 100)
+        NoServersLabel.Position = UDim2.new(0, 0, 0, 0)
+        NoServersLabel.BackgroundTransparency = 1
+        NoServersLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        NoServersLabel.Text = "Сервера не найдены\nID: " .. stealBrainrotGameId .. "\nПопробуйте другой ID"
+        NoServersLabel.Font = Enum.Font.Gotham
+        NoServersLabel.TextSize = 12
+        NoServersLabel.TextWrapped = true
+        NoServersLabel.Parent = ScrollingFrame
+    else
+        for i, server in ipairs(servers) do
+            local ServerFrame = Instance.new("Frame")
+            ServerFrame.Size = UDim2.new(1, 0, 0, 50)
+            ServerFrame.Position = UDim2.new(0, 0, 0, (i-1)*55)
+            ServerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+            ServerFrame.Parent = ScrollingFrame
 
-        local IncomeLabel = Instance.new("TextLabel")
-        IncomeLabel.Size = UDim2.new(0, 120, 1, 0)
-        IncomeLabel.Position = UDim2.new(0, 10, 0, 0)
-        IncomeLabel.BackgroundTransparency = 1
-        IncomeLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        IncomeLabel.Text = "💵 " .. server.income .. "M/сек"
-        IncomeLabel.Font = Enum.Font.GothamBold
-        IncomeLabel.TextSize = 16
-        IncomeLabel.Parent = ServerFrame
+            local IncomeLabel = Instance.new("TextLabel")
+            IncomeLabel.Size = UDim2.new(0, 100, 1, 0)
+            IncomeLabel.Position = UDim2.new(0, 5, 0, 0)
+            IncomeLabel.BackgroundTransparency = 1
+            IncomeLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            IncomeLabel.Text = server.income .. "M/сек"
+            IncomeLabel.Font = Enum.Font.GothamBold
+            IncomeLabel.TextSize = 14
+            IncomeLabel.Parent = ServerFrame
 
-        local PlayersLabel = Instance.new("TextLabel")
-        PlayersLabel.Size = UDim2.new(0, 100, 0, 20)
-        PlayersLabel.Position = UDim2.new(0, 140, 0, 5)
-        PlayersLabel.BackgroundTransparency = 1
-        PlayersLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-        PlayersLabel.Text = "👥 " .. server.players .. " игроков"
-        PlayersLabel.Font = Enum.Font.Gotham
-        PlayersLabel.TextSize = 12
-        PlayersLabel.Parent = ServerFrame
+            local PlayersLabel = Instance.new("TextLabel")
+            PlayersLabel.Size = UDim2.new(0, 80, 1, 0)
+            PlayersLabel.Position = UDim2.new(0, 110, 0, 0)
+            PlayersLabel.BackgroundTransparency = 1
+            PlayersLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+            PlayersLabel.Text = server.players .. " игроков"
+            PlayersLabel.Font = Enum.Font.Gotham
+            PlayersLabel.TextSize = 12
+            PlayersLabel.Parent = ServerFrame
 
-        local JoinButton = Instance.new("TextButton")
-        JoinButton.Size = UDim2.new(0, 80, 0, 35)
-        JoinButton.Position = UDim2.new(1, -90, 0.5, -17)
-        JoinButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        JoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        JoinButton.Text = "🚀 ВОЙТИ"
-        JoinButton.Font = Enum.Font.GothamBold
-        JoinButton.TextSize = 12
-        JoinButton.Parent = ServerFrame
+            local JoinButton = Instance.new("TextButton")
+            JoinButton.Size = UDim2.new(0, 60, 0, 25)
+            JoinButton.Position = UDim2.new(1, -65, 0.5, -12)
+            JoinButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            JoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            JoinButton.Text = "ВОЙТИ"
+            JoinButton.Font = Enum.Font.GothamBold
+            JoinButton.TextSize = 10
+            JoinButton.Parent = ServerFrame
 
-        JoinButton.MouseButton1Click:Connect(function()
-            TeleportService:TeleportToPlaceInstance(server.placeId, server.serverId, player)
-        end)
+            JoinButton.MouseButton1Click:Connect(function()
+                TeleportService:TeleportToPlaceInstance(server.placeId, server.serverId, player)
+            end)
+        end
     end
 
-    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #servers * 65)
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #servers * 55)
     
     local RefreshButton = Instance.new("TextButton")
-    RefreshButton.Size = UDim2.new(0, 120, 0, 35)
-    RefreshButton.Position = UDim2.new(0.5, -60, 1, -45)
+    RefreshButton.Size = UDim2.new(0, 100, 0, 25)
+    RefreshButton.Position = UDim2.new(0.5, -50, 1, -35)
     RefreshButton.BackgroundColor3 = Color3.fromRGB(60, 100, 200)
     RefreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    RefreshButton.Text = "🔄 ОБНОВИТЬ"
+    RefreshButton.Text = "ОБНОВИТЬ"
     RefreshButton.Font = Enum.Font.Gotham
-    RefreshButton.TextSize = 14
+    RefreshButton.TextSize = 12
     RefreshButton.Parent = MainFrame
     
     RefreshButton.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
-        createIncomeGUI()
+        createBrainrotGUI()
     end)
 end
 
 -- Запуск
-createIncomeGUI()
+createBrainrotGUI()
